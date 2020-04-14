@@ -10,13 +10,38 @@ import (
 
 	"github.com/erikyvanov/Notas-API-REST/db"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func traerNotas(w http.ResponseWriter, r *http.Request) {
+func traerNota(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
+	var nota db.Nota
+
+	//Obtener ID
+	var p = mux.Vars(r)
+
+	//convertir el ID string a ID BSON
+	// string to primitive.ObjectID
+	id, _ := primitive.ObjectIDFromHex(p["id"])
+
+	//Conectar con la base de datos
+	coleccion := db.ConnectToMongoDB()
+
+	//Se usa el id como flitro
+	filtro := bson.M{"_id": id}
+
+	err := coleccion.FindOne(context.TODO(), filtro).Decode(&nota)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Se envio una nota,", nota.ID)
+	json.NewEncoder(w).Encode(nota)
 }
 
-func traerNota(w http.ResponseWriter, r *http.Request) {
+func traerNotas(w http.ResponseWriter, r *http.Request) {
 
 }
 
@@ -55,10 +80,10 @@ func main() {
 
 	//Rutas
 	router.HandleFunc("/notas", traerNotas).Methods("GET")
-	router.HandleFunc("/notas/{}", traerNota).Methods("GET")
+	router.HandleFunc("/notas/{id}", traerNota).Methods("GET")
 	router.HandleFunc("/notas", crearNota).Methods("POST")
-	router.HandleFunc("/notas/{}", editarNota).Methods("PUT")
-	router.HandleFunc("/notas/{}", borrarNota).Methods("DELETE")
+	router.HandleFunc("/notas/{id}", editarNota).Methods("PUT")
+	router.HandleFunc("/notas/{id}", borrarNota).Methods("DELETE")
 
 	//Crear el servidor
 	server := &http.Server{
