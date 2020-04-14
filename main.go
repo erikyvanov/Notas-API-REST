@@ -1,30 +1,52 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
+	"github.com/erikyvanov/Notas-API-REST/db"
 	"github.com/gorilla/mux"
 )
 
-func traerNotas(http.ResponseWriter, *http.Request) {
+func traerNotas(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func traerNota(http.ResponseWriter, *http.Request) {
+func traerNota(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func crearNota(http.ResponseWriter, *http.Request) {
+func crearNota(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var nuevaNota db.Nota
+	err := json.NewDecoder(r.Body).Decode(&nuevaNota)
+
+	if err != nil {
+		panic(err)
+	}
+
+	//conectar con la base de datos
+	collection := db.ConnectToMongoDB()
+
+	insertResult, err := collection.InsertOne(context.TODO(), nuevaNota)
+	if err != nil {
+		panic(err)
+	}
+
+	json.NewEncoder(w).Encode(insertResult)
+	fmt.Println("Nota insertada, ID: ", insertResult.InsertedID)
+}
+
+func editarNota(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func editarNota(http.ResponseWriter, *http.Request) {
-
-}
-
-func borrarNota(http.ResponseWriter, *http.Request) {
+func borrarNota(w http.ResponseWriter, r *http.Request) {
 
 }
 
