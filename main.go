@@ -98,7 +98,42 @@ func crearNota(w http.ResponseWriter, r *http.Request) {
 }
 
 func editarNota(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
+	var p = mux.Vars(r)
+
+	//Convertir ID string en ID BSON
+	id, _ := primitive.ObjectIDFromHex(p["id"])
+
+	var nota db.Nota
+
+	//Conectar con la base de datos
+	coleccion := db.ConnectToMongoDB()
+
+	filtro := bson.M{"_id": id}
+
+	//Decodificar el objeto enviado
+	json.NewDecoder(r.Body).Decode(&nota)
+
+	//Pasar objeto a BSON Document
+	update := bson.D{
+		{"$set", bson.D{
+			{"titulo", nota.Titulo},
+			{"descripcion", nota.Descripcion},
+			{"autor", nota.Autor},
+		}},
+	}
+
+	err := coleccion.FindOneAndUpdate(context.TODO(), filtro, update).Decode(&nota)
+
+	if err != nil {
+		panic(err)
+	}
+
+	nota.ID = id
+
+	fmt.Println("Se modifico un elemento", nota.ID)
+	json.NewEncoder(w).Encode(nota)
 }
 
 func borrarNota(w http.ResponseWriter, r *http.Request) {
