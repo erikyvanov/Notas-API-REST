@@ -42,7 +42,37 @@ func traerNota(w http.ResponseWriter, r *http.Request) {
 }
 
 func traerNotas(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
+	var notas []db.Nota
+
+	coleccion := db.ConnectToMongoDB()
+
+	//Traer todas las notas
+	cur, err := coleccion.Find(context.TODO(), bson.M{})
+	if err != nil {
+		panic(err)
+	}
+	defer cur.Close(context.TODO())
+
+	//Decodificar cada tarea
+	for cur.Next(context.TODO()) {
+		var nota db.Nota
+
+		err := cur.Decode(&nota)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		notas = append(notas, nota)
+	}
+
+	if err := cur.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Se enviaron todas las notas")
+	json.NewEncoder(w).Encode(notas)
 }
 
 func crearNota(w http.ResponseWriter, r *http.Request) {
