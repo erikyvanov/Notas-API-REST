@@ -137,7 +137,26 @@ func editarNota(w http.ResponseWriter, r *http.Request) {
 }
 
 func borrarNota(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
+	var p = mux.Vars(r)
+
+	//Convertir ID string en ID BSON
+	id, _ := primitive.ObjectIDFromHex(p["id"])
+
+	//Conectar con la base de datos
+	coleccion := db.ConnectToMongoDB()
+
+	filtro := bson.M{"_id": id}
+
+	deleteResult, err := coleccion.DeleteOne(context.TODO(), filtro)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println("Se elimino una nota.", id)
+	json.NewEncoder(w).Encode(deleteResult)
 }
 
 func main() {
